@@ -1,0 +1,69 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+class ParticleInAWell:
+    def __init__(self, a, b, V0, N):
+        self.a = a
+        self.b = b
+        self.V0 = V0
+        self.N = N
+        self.x = np.linspace(0, b, N)
+        self.dx = self.x[1] - self.x[0]
+        self.V = self.potential()
+        self.H = self.hamiltonian()
+
+    def potential(self):
+        V = np.zeros(self.N)
+        for i in range(self.N):
+            if self.x[i] <= self.a:
+                V[i] = 0
+            elif self.x[i] > self.a and self.x[i] <= self.b:
+                V[i] = self.V0
+            else:
+                V[i] = np.inf
+        return V
+
+    def hamiltonian(self):
+        H = np.zeros((self.N, self.N))
+        for i in range(self.N):
+            H[i, i] = 2 / self.dx**2 + self.V[i]
+            if i > 0:
+                H[i, i-1] = -1 / self.dx**2
+            if i < self.N - 1:
+                H[i, i+1] = -1 / self.dx**2
+        return H
+
+    def solve(self):
+        E, psi = np.linalg.eigh(self.H)
+        return E, psi
+
+a_values = np.linspace(0.1, 0.9, 5)
+V0_values = np.linspace(0.1, 1, 10)
+
+energies = np.zeros((len(a_values), len(V0_values)))
+wavefunctions = np.zeros((len(a_values), len(V0_values), 100))
+
+for i, a in enumerate(a_values):
+    for j, V0 in enumerate(V0_values):
+        system = ParticleInAWell(a=a, b=1, V0=V0, N=100)
+        E, psi = system.solve()
+        energies[i, j] = E[0]
+        wavefunctions[i, j] = psi[:, 0]
+
+fig, axs = plt.subplots(2, 1, figsize=(8, 8))
+axs[0].set_title("Energy eigenvalues")
+axs[0].set_xlabel("Barrier height V0")
+axs[0].set_ylabel("Well width a")
+im = axs[0].imshow(energies.T, extent=[a_values[0], a_values[-1], V0_values[0], V0_values[-1]], aspect='auto', origin='lower')
+cbar = fig.colorbar(im, ax=axs[0])
+cbar.ax.set_ylabel('Energy')
+
+axs[1].set_title("Wavefunctions")
+axs[1].set_xlabel("Position x")
+axs[1].set_ylabel("Well width a")
+for i, a in enumerate(a_values):
+    for j, V0 in enumerate(V0_values):
+        axs[1].plot(system.x, wavefunctions[i, j]**2 + energies[i, j], label=f"a={a:.2f}, V0={V0:.2f}")
+axs[1].legend()
+
+plt.show()
