@@ -65,5 +65,5 @@ for i, a in enumerate(a_values):
     for j, V0 in enumerate(V0_values):
         axs[1].plot(system.x, wavefunctions[i, j]**2 + energies[i, j], label=f"a={a:.2f}, V0={V0:.2f}")
 axs[1].legend()
-
+print ("Here's my work")
 plt.show()
